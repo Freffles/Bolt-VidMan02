@@ -16,6 +16,7 @@ dist_electron
 .DS_Store
 *.pem
 *.local
+*.nfo
 
 # Debug
 npm-debug.log*
