@@ -10,6 +10,7 @@ coverage
 dist
 dist-ssr
 build
+dist_electron
 
 # Misc
 .DS_Store
@@ -54,3 +55,14 @@ logs
 
 # Vite
 .vite
+
+# Electron
+out/
+release/
+*.app
+*.exe
+*.dmg
+
+# Project specific
+.cache/
+user-data/

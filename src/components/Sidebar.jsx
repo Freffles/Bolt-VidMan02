@@ -1,109 +1,64 @@
-import { Home, Heart, Clock, Menu } from 'lucide-react'
-import { Button } from './ui/button'
-import SearchInput from './SearchInput'
 import { useSearch } from '../contexts/SearchContext'
-import { useState } from 'react'
-import { Input } from './ui/input'
+import { Button } from './ui/button'
+import { 
+  Heart, 
+  Clock, 
+  Film, 
+  FolderOpen,
+  Tags,
+  Settings
+} from 'lucide-react'
+import { useLocalVideos } from '../contexts/LocalVideoContext'
 
 function Sidebar() {
-  const { 
-    selectedGenre, 
-    setSelectedGenre, 
-    availableGenres,
-    addGenre,
-    activeSection,
-    setActiveSection
-  } = useSearch()
-  
-  const [newGenre, setNewGenre] = useState('')
-  const [showAddGenre, setShowAddGenre] = useState(false)
+  const { activeSection, setActiveSection } = useSearch()
+  const { selectVideoFolder } = useLocalVideos()
 
-  const handleAddGenre = () => {
-    if (newGenre.trim()) {
-      addGenre(newGenre.trim())
-      setNewGenre('')
-      setShowAddGenre(false)
-    }
-  }
-
-  const navigationItems = [
-    { id: 'home', icon: Home, label: 'Home' },
+  const menuItems = [
+    { id: 'all', icon: Film, label: 'All Videos' },
     { id: 'favorites', icon: Heart, label: 'Favorites' },
-    { id: 'watchlist', icon: Clock, label: 'Watchlist' }
+    { id: 'watchlist', icon: Clock, label: 'Watch Later' },
+    { id: 'genres', icon: Tags, label: 'Genres' }
   ]
 
   return (
-    <aside className="w-64 bg-card border-r border-border p-4 h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Video Collection</h1>
-        <Button variant="ghost" size="icon" className="lg:hidden">
-          <Menu className="h-6 w-6" />
+    <div className="w-64 border-r bg-card p-4 flex flex-col gap-2">
+      <Button
+        variant="secondary"
+        className="w-full justify-start gap-2 mb-4"
+        onClick={selectVideoFolder}
+      >
+        <FolderOpen className="h-4 w-4" />
+        Select Folder
+      </Button>
+
+      <div className="space-y-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon
+          return (
+            <Button
+              key={item.id}
+              variant={activeSection === item.id ? 'secondary' : 'ghost'}
+              className="w-full justify-start gap-2"
+              onClick={() => setActiveSection(item.id)}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Button>
+          )
+        })}
+      </div>
+
+      <div className="mt-auto">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-2"
+        >
+          <Settings className="h-4 w-4" />
+          Settings
         </Button>
       </div>
-      
-      <div className="mb-6">
-        <SearchInput />
-      </div>
-
-      <nav className="space-y-2">
-        {navigationItems.map(({ id, icon: Icon, label }) => (
-          <Button
-            key={id}
-            variant={activeSection === id ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={() => setActiveSection(id)}
-          >
-            <Icon className="w-5 h-5 mr-2" />
-            <span>{label}</span>
-          </Button>
-        ))}
-      </nav>
-
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold">Genres</h2>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6"
-            onClick={() => setShowAddGenre(!showAddGenre)}
-          >
-            <span className="text-lg">+</span>
-          </Button>
-        </div>
-
-        {showAddGenre && (
-          <div className="mb-2 flex space-x-2">
-            <Input
-              value={newGenre}
-              onChange={(e) => setNewGenre(e.target.value)}
-              placeholder="New genre"
-              className="h-8"
-            />
-            <Button 
-              size="sm" 
-              className="h-8"
-              onClick={handleAddGenre}
-            >
-              Add
-            </Button>
-          </div>
-        )}
-
-        <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto">
-          {Array.from(availableGenres).sort().map((genre) => (
-            <Button 
-              key={genre} 
-              variant={selectedGenre === genre ? "secondary" : "ghost"}
-              className="w-full justify-start text-sm h-8"
-              onClick={() => setSelectedGenre(selectedGenre === genre ? null : genre)}
-            >
-              {genre}
-            </Button>
-          ))}
-        </div>
-      </div>
-    </aside>
+    </div>
   )
 }
 

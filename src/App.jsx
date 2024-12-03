@@ -1,30 +1,41 @@
-import { useState } from 'react'
-import Sidebar from './components/Sidebar'
 import VideoGrid from './components/VideoGrid'
-import VideoModal from './components/VideoModal'
 import { SearchProvider } from './contexts/SearchContext'
+import { GenreProvider } from './contexts/GenreContext'
+import { ThemeProvider } from './contexts/ThemeContext'
+import { LocalVideoProvider } from './contexts/LocalVideoContext'
+import { Header } from './components/Header'
+import Sidebar from './components/Sidebar'
+import LocalVideoSection from './components/LocalVideoSection'
 
-function App() {
-  const [selectedVideo, setSelectedVideo] = useState(null)
-
+function MainContent() {
   return (
-    <SearchProvider>
-      <div className="flex min-h-screen bg-background">
-        <Sidebar />
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold">Popular Movies</h2>
+    <div className="flex h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 overflow-auto p-6">
+          <LocalVideoSection />
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">TMDB Movies</h2>
+            <VideoGrid />
           </div>
-          <VideoGrid onVideoSelect={setSelectedVideo} />
-          {selectedVideo && (
-            <VideoModal 
-              video={selectedVideo} 
-              onClose={() => setSelectedVideo(null)} 
-            />
-          )}
         </main>
       </div>
-    </SearchProvider>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <SearchProvider>
+        <GenreProvider>
+          <LocalVideoProvider>
+            <MainContent />
+          </LocalVideoProvider>
+        </GenreProvider>
+      </SearchProvider>
+    </ThemeProvider>
   )
 }
 

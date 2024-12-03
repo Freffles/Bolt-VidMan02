@@ -1,23 +1,50 @@
-# Video Collection Manager
+# VidMan - Video Collection Manager
 
-A modern web application for managing video collections built with React, Vite, and TailwindCSS.
+A modern desktop application for managing your local video collection, built with Electron and React.
 
 ## Features
 
-- Modern UI with Radix UI components
-- Responsive design using TailwindCSS
-- Fast development environment with Vite
+- 📁 Local Video Management
+  - Scan and manage your local video collection
+  - Parse NFO files for video metadata
+  - Automatic metadata enrichment from TMDB
+  - Support for movie posters and fanart
 
-## Prerequisites
+- 🎬 Video Organization
+  - Grid-based video browser
+  - Filter by favorites and watch later
+  - Genre-based organization
+  - Clean, modern interface
 
-- Node.js (v16 or higher)
-- npm (v7 or higher)
+- 🎨 User Experience
+  - Dark/Light theme support
+  - Responsive design
+  - Quick video search
+  - Sidebar navigation
 
-## Installation
+## Tech Stack
+
+- Frontend: React + Vite
+- Desktop: Electron
+- Styling: Tailwind CSS
+- State Management: React Context
+- API Integration: TMDB API v3
+- Build Tool: electron-builder
+
+## Development
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+- TMDB API key
+
+### Setup
 
 1. Clone the repository:
 ```bash
-git clone [your-repository-url]
+git clone [repository-url]
+cd vidman
 ```
 
 2. Install dependencies:
@@ -25,52 +52,63 @@ git clone [your-repository-url]
 npm install
 ```
 
-## Development
-
-To start the development server:
-```bash
-npm run dev
+3. Create a `.env` file in the root directory:
+```env
+VITE_TMDB_API_KEY=your_tmdb_api_key
 ```
 
-The application will be available at `http://localhost:5173`
+4. Start the development server:
+```bash
+npm run electron:dev
+```
 
-## Building for Production
+### Build
 
 To create a production build:
 ```bash
-npm run build
+npm run electron:build
 ```
 
-To preview the production build:
-```bash
-npm run preview
+## Folder Structure
+
+- `/src` - React application source
+  - `/components` - React components
+  - `/contexts` - React context providers
+  - `/lib` - Utility functions and API clients
+- `/electron` - Electron main process files
+  - `main.js` - Main process entry
+  - `preload.js` - Preload scripts
+
+## Video Folder Structure
+
+The application expects your video collection to follow this structure:
+```
+Video Folder/
+├── Movie Name (Year)/
+│   ├── movie.nfo
+│   ├── poster.jpg
+│   ├── fanart.jpg
+│   └── video file
 ```
 
-## Project Structure
+## NFO File Support
 
-```
-├── src/
-│   ├── components/     # React components
-│   ├── contexts/       # React context providers
-│   ├── lib/           # Utility functions and configurations
-│   ├── App.jsx        # Main App component
-│   ├── main.jsx       # Application entry point
-│   └── index.css      # Global styles
-├── public/            # Static assets
-└── index.html         # HTML entry point
-```
+Supports the following metadata from NFO files:
+- Movie title and year
+- Plot and tagline
+- Rating and runtime
+- Genres and certification
+- Cast information
+- Video/audio stream details
 
-## Technologies Used
+## Contributing
 
-- React 18
-- Vite 5
-- TailwindCSS 3
-- Radix UI Components
-- PostCSS
-- TypeScript support
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-## Scripts
+## License
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
+This project is licensed under the MIT License - see the LICENSE file for details.

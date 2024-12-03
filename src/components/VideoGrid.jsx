@@ -1,97 +1,161 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import VideoCard from './VideoCard'
 import { useSearch } from '../contexts/SearchContext'
-
-// Mock movie data for testing
-const mockVideos = [
-  {
-    id: 1,
-    title: "Inception",
-    year: 2010,
-    genres: ["Sci-Fi", "Action"],
-    poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
-    runtime: 148,
-    director: "Christopher Nolan",
-    rating: 8.8,
-    plot: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-    actors: [
-      { name: "Leonardo DiCaprio", role: "Cobb", thumb: "https://image.tmdb.org/t/p/w185/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg" },
-      { name: "Joseph Gordon-Levitt", role: "Arthur", thumb: "https://image.tmdb.org/t/p/w185/4U9G4YwTlIEbAymBaseltS8uqPx.jpg" }
-    ]
-  },
-  {
-    id: 2,
-    title: "The Dark Knight",
-    year: 2008,
-    genres: ["Action", "Crime", "Drama"],
-    poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-    runtime: 152,
-    director: "Christopher Nolan",
-    rating: 9.0,
-    plot: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
-    actors: [
-      { name: "Christian Bale", role: "Bruce Wayne", thumb: "https://image.tmdb.org/t/p/w185/qCpZn2e3dimwbryLnqxZuI88PTi.jpg" },
-      { name: "Heath Ledger", role: "Joker", thumb: "https://image.tmdb.org/t/p/w185/5Y9HnU0riVtpBHXHcPMtpBGFHDJ.jpg" }
-    ]
-  }
-]
+import { getPopularMovies, searchMovies } from '../lib/tmdb.api'
 
 function VideoGrid({ onVideoSelect }) {
-  const [videos] = useState(mockVideos)
+  const [videos, setVideos] = useState([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const loader = useRef(null)
+  
   const { 
     searchQuery, 
-    selectedGenre, 
-    addGenres,
+    selectedGenre,
     activeSection,
     favorites,
-    watchlist
+    watchlist,
+    videos: cachedVideos,
+    addVideos
   } = useSearch()
 
-  useEffect(() => {
-    const allGenres = new Set(videos.flatMap(video => video.genres))
-    addGenres(allGenres)
-  }, [videos, addGenres])
+  const fetchMovies = async (pageNum, isNewSearch = false) => {
+    try {
+      setIsLoading(true)
+      let response
 
-  let filteredVideos = videos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         video.director?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesGenre = !selectedGenre || video.genres?.includes(selectedGenre)
-    
-    // Filter based on active section
-    if (activeSection === 'favorites') {
-      return favorites.has(video.id) && matchesSearch && matchesGenre
-    }
-    if (activeSection === 'watchlist') {
-      return watchlist.has(video.id) && matchesSearch && matchesGenre
-    }
-    return matchesSearch && matchesGenre
-  })
+      if (searchQuery) {
+        response = await searchMovies(searchQuery, pageNum)
+      } else {
+        response = await getPopularMovies(pageNum)
+      }
 
-  if (filteredVideos.length === 0) {
-    let message = "No videos found matching your search criteria."
-    if (activeSection === 'favorites') {
-      message = "No favorites yet. Click the heart icon on videos to add them to your favorites."
-    } else if (activeSection === 'watchlist') {
-      message = "Your watchlist is empty. Click the clock icon on videos to add them to your watchlist."
+      // Store fetched videos in context
+      addVideos(response.results)
+      
+      // Update local state for pagination
+      setVideos(prev => isNewSearch ? response.results : [...prev, ...response.results])
+      setHasMore(response.page < response.total_pages)
+      setError(null)
+    } catch (err) {
+      console.error('Failed to fetch movies:', err)
+      setError('Failed to load movies. Please try again later.')
+    } finally {
+      setIsLoading(false)
     }
-
-    return (
-      <div className="text-center text-muted-foreground py-12">
-        {message}
-      </div>
-    )
   }
 
+  // Reset and fetch only when search query changes or when returning to home section
+  useEffect(() => {
+    const shouldFetch = searchQuery || activeSection === 'home'
+    if (shouldFetch) {
+      setPage(1)
+      setVideos([])
+      setHasMore(true)
+      fetchMovies(1, true)
+    }
+  }, [searchQuery, activeSection])
+
+  // Infinite scroll handler
+  const handleObserver = useCallback((entries) => {
+    const target = entries[0]
+    if (target.isIntersecting && hasMore && !isLoading && activeSection === 'home') {
+      setPage(prev => prev + 1)
+    }
+  }, [hasMore, isLoading, activeSection])
+
+  useEffect(() => {
+    const option = {
+      root: null,
+      rootMargin: "20px",
+      threshold: 0
+    }
+    const observer = new IntersectionObserver(handleObserver, option)
+    if (loader.current) observer.observe(loader.current)
+    
+    return () => {
+      if (loader.current) observer.unobserve(loader.current)
+    }
+  }, [handleObserver])
+
+  // Fetch more data when page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchMovies(page)
+    }
+  }, [page])
+
+  // Filter videos based on active section
+  const filteredVideos = cachedVideos.filter(video => {
+    if (activeSection === 'favorites') {
+      return favorites.has(video.id)
+    }
+    if (activeSection === 'watchlist') {
+      return watchlist.has(video.id)
+    }
+    if (selectedGenre) {
+      return video.genre_ids?.includes(selectedGenre)
+    }
+    return true
+  })
+
+  // Show empty state for favorites and watchlist
+  const showEmptyState = (activeSection === 'favorites' || activeSection === 'watchlist') && 
+                        filteredVideos.length === 0
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {filteredVideos.map(video => (
-        <VideoCard 
-          key={video.id} 
-          video={video} 
-          onClick={() => onVideoSelect(video)} 
-        />
-      ))}
-    </div>
+    <>
+      {showEmptyState ? (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold mb-2">
+            {activeSection === 'favorites' ? 'No favorites yet' : 'Watchlist is empty'}
+          </h3>
+          <p className="text-muted-foreground">
+            {activeSection === 'favorites' 
+              ? 'Movies you mark as favorites will appear here'
+              : 'Movies you add to your watchlist will appear here'
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {filteredVideos.map(video => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              onClick={() => onVideoSelect(video)}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-muted aspect-[2/3] rounded-lg mb-2"></div>
+              <div className="h-3 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="text-center text-destructive py-4">
+          {error}
+        </div>
+      )}
+
+      {/* Infinite scroll trigger */}
+      {!error && !isLoading && hasMore && activeSection === 'home' && (
+        <div ref={loader} className="h-10" />
+      )}
+    </>
   )
 }
 
