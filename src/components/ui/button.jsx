@@ -3,6 +3,9 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
+/**
+ * Button component with various style variants and sizes
+ */
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
@@ -29,12 +32,21 @@ const buttonVariants = cva(
   }
 )
 
-const Button = React.forwardRef(({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
+const Button = React.forwardRef(({ 
+  className, 
+  variant = "default", 
+  size = "default", 
+  asChild = false,
+  "aria-label": ariaLabel,
+  ...props 
+}, ref) => {
   const Comp = asChild ? Slot : "button"
   return (
     <Comp
       className={cn(buttonVariants({ variant, size }), className)}
       ref={ref}
+      aria-label={ariaLabel}
+      type={Comp === "button" && !props.type ? "button" : props.type}
       {...props}
     />
   )

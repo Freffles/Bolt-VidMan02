@@ -84,12 +84,14 @@ export async function scanVideoFolder(folderPath) {
         // Look for poster and fanart
         const posterPath = await findFile(moviePath, 'poster.jpg')
         const fanartPath = await findFile(moviePath, 'fanart.jpg')
+        const videoPath = await findVideoFile(moviePath)
 
         movies.push({
           ...movieData,
           folderPath: moviePath,
           posterPath,
           fanartPath,
+          videoPath,
           localPath: true
         })
       }
@@ -116,6 +118,29 @@ async function findNfoFile(folderPath, movieName) {
   }
 
   return null
+}
+
+async function findVideoFile(folderPath) {
+  try {
+    // Get all files in the folder
+    const entries = await window.api.readDirectory(folderPath)
+    
+    // Common video file extensions
+    const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.m4v', '.webm']
+    
+    // Find the first file with a video extension
+    for (const entry of entries) {
+      if (entry.isFile) {
+        const ext = entry.name.substring(entry.name.lastIndexOf('.')).toLowerCase()
+        if (videoExtensions.includes(ext)) {
+          return `${folderPath}/${entry.name}`
+        }
+      }
+    }
+    return null
+  } catch (error) {
+    return null
+  }
 }
 
 async function findFile(folderPath, fileName) {

@@ -4,6 +4,7 @@ import { GenreProvider } from './contexts/GenreContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { LocalVideoProvider } from './contexts/LocalVideoContext'
 import { Header } from './components/Header'
+import UpdateNotification from './components/UpdateNotification'
 import Sidebar from './components/Sidebar'
 import LocalVideoSection from './components/LocalVideoSection'
 
@@ -32,6 +33,7 @@ function App() {
         <GenreProvider>
           <LocalVideoProvider>
             <MainContent />
+            <UpdateNotification />
           </LocalVideoProvider>
         </GenreProvider>
       </SearchProvider>

@@ -1,0 +1,39 @@
+# Icon Creation Instructions for VidMan Application
+
+For proper packaging and distribution, the application needs platform-specific icon files:
+
+## Required Icon Files
+
+1. Windows: `public/icon.ico`
+   - 256x256 pixels (minimum)
+   - ICO format
+
+2. macOS: `public/icon.icns`
+   - 1024x1024 pixels (recommended)
+   - ICNS format
+
+3. Linux: `public/icon.png`
+   - 512x512 pixels (recommended)
+   - PNG format
+
+## Icon Design Guidelines
+
+- Use a simple, recognizable design
+- Ensure the icon works well in both light and dark themes
+- Test visibility at smaller sizes
+- Maintain consistent branding across platforms
+
+## Conversion Tools
+
+- For Windows (ICO): Use online converters like https://convertico.com/
+- For macOS (ICNS): Use `iconutil` command-line tool or online converters
+- For all platforms: Consider using Electron Icon Maker (https://github.com/jaretburkett/electron-icon-maker)
+
+## Example Icon Design
+
+A simple video player icon with:
+- A dark blue/slate background (#1e293b)
+- A white play triangle in the center
+- Three blue circles on the left side representing a playlist or controls
+
+This design would be recognizable and work well across all platforms.

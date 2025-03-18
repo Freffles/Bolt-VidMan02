@@ -3,6 +3,7 @@ import { Heart, Clock } from "lucide-react"
 import { Button } from "./ui/button"
 import { useSearch } from '../contexts/SearchContext'
 import { useGenres } from '../contexts/GenreContext'
+import { getTMDBImageUrl } from '../lib/tmdb.config'
 import { useState, useEffect } from 'react'
 
 /**
@@ -38,20 +39,24 @@ export function VideoCard({ video, onClick }) {
 
   const imageUrl = video.localPath 
     ? (posterUrl || '/placeholder-poster.jpg')
-    : `https://image.tmdb.org/t/p/w500${video.poster_path}`
+    : getTMDBImageUrl(video.poster_path, 'medium') || '/placeholder-poster.jpg'
 
   const title = video.localPath ? video.title : video.title
   const rating = video.localPath ? video.rating : video.vote_average
-  const year = video.localPath ? video.year : new Date(video.release_date).getFullYear()
+  const year = video.localPath ? video.year : (video.release_date ? new Date(video.release_date).getFullYear() : '')
   const isFavorite = favorites.has(video.id)
   const isInWatchlist = watchlist.has(video.id)
 
   return (
-    <Card className={`overflow-hidden group ${video.localPath ? 'ring-2 ring-primary/20' : ''}`}>
+    <Card 
+      className={`overflow-hidden group ${video.localPath ? 'ring-2 ring-primary/20' : ''}`}
+      role="article"
+      aria-label={`${title} (${year || 'Unknown year'})`}
+    >
       <div className="relative aspect-[2/3]">
         <img
           src={imageUrl}
-          alt={title}
+          alt={`Poster for ${title}`}
           className="w-full h-full object-cover cursor-pointer transition-transform group-hover:scale-105"
           onClick={onClick}
         />
@@ -64,8 +69,10 @@ export function VideoCard({ video, onClick }) {
               e.stopPropagation()
               toggleFavorite(video.id)
             }}
+            aria-label={isFavorite ? `Remove ${title} from favorites` : `Add ${title} to favorites`}
+            aria-pressed={isFavorite}
           >
-            <Heart className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
+            <Heart className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
@@ -75,13 +82,18 @@ export function VideoCard({ video, onClick }) {
               e.stopPropagation()
               toggleWatchlist(video.id)
             }}
+            aria-label={isInWatchlist ? `Remove ${title} from watchlist` : `Add ${title} to watchlist`}
+            aria-pressed={isInWatchlist}
           >
-            <Clock className="h-3.5 w-3.5" fill={isInWatchlist ? "currentColor" : "none"} />
+            <Clock className="h-3.5 w-3.5" fill={isInWatchlist ? "currentColor" : "none"} aria-hidden="true" />
           </Button>
         </div>
         {rating > 0 && (
-          <div className="absolute top-2 left-2 bg-black/50 text-white px-1.5 py-0.5 rounded-full text-xs font-medium">
-            ★ {rating.toFixed(1)}
+          <div 
+            className="absolute top-2 left-2 bg-black/50 text-white px-1.5 py-0.5 rounded-full text-xs font-medium"
+            aria-label={`Rating: ${rating.toFixed(1)} out of 10`}
+          >
+            <span aria-hidden="true">★ {rating.toFixed(1)}</span>
           </div>
         )}
         {video.localPath && (
@@ -95,8 +107,9 @@ export function VideoCard({ video, onClick }) {
           <CardTitle
             className="text-sm cursor-pointer hover:text-primary line-clamp-1 mb-1 text-foreground/90"
             onClick={onClick}
+            as="h3"
           >
-            {title}
+            {title || 'Untitled'}
           </CardTitle>
           <CardDescription className="text-foreground/75">
             <div className="flex flex-wrap gap-1 mb-1">

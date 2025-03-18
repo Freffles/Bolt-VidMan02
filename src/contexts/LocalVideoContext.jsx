@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { loadLocalMovies, clearMovieCache } from '../lib/localData'
 
 const LocalVideoContext = createContext()
@@ -8,17 +8,24 @@ export function LocalVideoProvider({ children }) {
   const [videoFolder, setVideoFolder] = useState(localStorage.getItem('videoFolder'))
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [currentVideo, setCurrentVideo] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
 
   const selectVideoFolder = useCallback(async () => {
     try {
+      console.log('selectVideoFolder called')
+      console.log('window.api available:', !!window.api)
+      
       const folderPath = await window.api.selectDirectory()
+      console.log('Selected folder path:', folderPath)
+      
       if (folderPath) {
         setVideoFolder(folderPath)
         localStorage.setItem('videoFolder', folderPath)
         await loadVideosFromFolder(folderPath)
       }
     } catch (error) {
-      console.error('Error selecting video folder:', error)
+      console.error('Error selecting video folder:', error.message, error.stack)
       setError('Failed to select video folder')
     }
   }, [])
@@ -44,8 +51,32 @@ export function LocalVideoProvider({ children }) {
     }
   }, [videoFolder, loadVideosFromFolder])
 
+  const playVideo = useCallback(async (video) => {
+    try {
+      if (video && video.localPath) {
+        // Get the actual video file path from the local video data
+        const videoFilePath = video.videoPath || video.localPath
+        
+        // Set the current video for playback
+        setCurrentVideo({
+          ...video,
+          videoFilePath
+        })
+        setIsPlaying(true)
+      }
+    } catch (error) {
+      console.error('Error playing video:', error)
+      setError('Failed to play video')
+    }
+  }, [])
+
+  const stopVideo = useCallback(() => {
+    setCurrentVideo(null)
+    setIsPlaying(false)
+  }, [])
+
   // Load videos on initial mount if folder is set
-  useState(() => {
+  useEffect(() => {
     if (videoFolder) {
       loadVideosFromFolder(videoFolder)
     }
@@ -58,6 +89,11 @@ export function LocalVideoProvider({ children }) {
     error,
     selectVideoFolder,
     refreshVideos,
+    // Video playback
+    currentVideo,
+    isPlaying,
+    playVideo,
+    stopVideo,
   }
 
   return (
